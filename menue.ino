@@ -9,7 +9,29 @@
 #include "menue.h"
 
 
-int posValue = lcdCol - spaceValue;
+/* defaults */
+#define SPACEVALUE=5
+
+/* menue class */
+menue::menue(int lcd_width, int lcd_hight, LiquidCrystal_I2C *display, RotaryEncoder *encoder)
+{
+	_lcd = display;
+	_encoder = encoder;
+	_num_items = 0;
+	_lcd_width = lcd_width;
+	_lcd_hight = lcd_hight;
+	_curr_menue = 0;
+	_curr_page = 0;
+	_lcd_pos_value = lcd_width - SPACEVALUE;
+	
+}
+
+void menue::set_space(int new_space)
+{
+	this->_lcd_pos_value = this->_lcd_width - new_space;
+}
+
+
 
 /* reduces encoder position between 0 and number of menues */
 /* returns the current menue */

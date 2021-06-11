@@ -1,15 +1,67 @@
 /*************************************************************************************
-   Menue Steuerung für Nockenschleifmaschine
-   Version: 1.4
+   Lcd menue
+   originaly for camshaft grinding machine
+   
+   steerable with encoder + button
+   
+   using the LiquidCrystal_I2C and RotaryEncoder library
 
-   Arduino UNO
+   tested on Arduino Nano
 
-   Autor: Marcel Herzberg 02.2021
+   Autor: Marcel Herzberg
+   
+   latest changes 06.2021
  *************************************************************************************/
 #ifndef menue_h
 #define menue_h
 
-/* Basic Cofigurations */
+#define VERSION=18
+
+/* menue class*/
+class menue{
+private:
+	LiquidCrystal_I2C *_lcd;
+	RotaryEncoder *_encoder;
+	menue_item *_items[16];
+	int _num_items
+	int _lcd_width;
+	int _lcd_hight
+	int _curr_menue;
+	int _curr_page;
+	int _lcd_pos_value;
+
+public:
+	/* constructor */
+	menue(int lcd_width, int lcd_hight, LiquidCrystal_I2C *display, RotaryEncoder *encoder);
+	/* set space of value on lcd */
+	void set_space(int new_space);
+	/* return current menue item index */
+	int get_menue();
+	/* set new menue item */
+	void set_menue(int new_pos);
+	/* refresh lcd output commpletly */
+	void refresh_lcd();
+	
+	
+
+class menue_item : public menue {
+private:
+	menue *_menue;
+	char *_title;
+	float _value;
+	float _scale;
+
+	float value_to_float();
+	
+public:
+	/* constructor */
+	menue_item(menue *menue, char *title, float value, float scale);
+	/* set encoder position to value of item */
+	set_encoder();
+	/* refresh lcd output only value when changing */
+	refesh_lcd_value();
+};
+
 
 /***************************************************/
 /* Menue Line */
