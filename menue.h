@@ -15,19 +15,19 @@
 #ifndef menue_h
 #define menue_h
 
-#define VERSION=18
+#define VERSION 18
 
 /* defaults */
-#define SPACEVALUE=5
-#define DECIMALS=2
+#define SPACEVALUE 5
+#define DECIMALS 2
 
-/* menue class*/
-class menue{
+/* Menue class*/
+class Menue{
 private:
 	LiquidCrystal_I2C *_lcd;
 	RotaryEncoder *_encoder;
 	DigitalIn *_button;
-	menue_item **_items;
+	MenueItem **_items;
 	int _num_items
 	int _lcd_row;
 	int _lcd_col;
@@ -54,25 +54,25 @@ private:
 
 public:
 	/* constructor */
-	menue(int lcd_width, int lcd_hight, LiquidCrystal_I2C *display, RotaryEncoder *encoder);
+	Menue(int lcd_col, int lcd_row, LiquidCrystal_I2C *display, RotaryEncoder *encoder, DigitalIn *button; int numItems);
 
-	void initItem(int index, menueItem new_item);
+	void initItem(int index, MenueItem new_item);
 
 	void run();
 
 	void reset()
 	
 
-class menueItem : public menue {
+class MenueItem : public Menue {
 private:
-	menue *_menue;
+	Menue *_menue;
 	char *_title;
 	float _value;
 	float _scale;
 	
 public:
 	/* constructor */
-	menue_item(menue *menue, char *title, float value, float scale);
+	MenueItem(Menue *menue, char *title, float value, float scale);
 
 	char *getTitle();
 	

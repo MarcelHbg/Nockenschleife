@@ -31,15 +31,15 @@
 
 */
 /**/
-#define lcdCol 20 //display charakters per line
-#define lcdRow 4  //display num of lines
+#define LCDCOL 20 //display charakters per line
+#define LCDROW 4  //display num of lines
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
-LiquidCrystal_I2C lcd(0x3f, lcdCol, lcdRow);
+LiquidCrystal_I2C lcd(0x3f, LCDCOL, LCDROW);
 
 /*
-#define lcdCol 16 //display charakters per line
-#define lcdRow 2  //display num of lines
+#define LCDCOL 16 //display charakters per line
+#define LCDROW 2  //display num of lines
 #include <LiquidCrystal.h>
 LiquidCrystal lcd(2, 3, 4, 5, 6, 7, 8);
 */
@@ -50,26 +50,31 @@ LiquidCrystal lcd(2, 3, 4, 5, 6, 7, 8);
 RotaryEncoder encoder(A1, A0); // A / B
 /**************************************************************************************/
 
+/* Konfiguration der Input PINS *************************************************************/
+/* Taster mit pin und Masse verbinden */
+#include "digitalin.h"
+DigitalIn C_on(2);           // Taster zum einschalten der Drehachse C
+DigitalIn touchOff(3);       // Taster zum "ankratzen" schaltet in den "ankratzmodus" 
+DigitalIn autoStart(4);      // Taster zum starten des automatischen zustellens
+DigitalIn choose(5);         // Taster des encoders (menuesteuerung/ankratzen)
+/**************************************************************************************/
+
 /* Konfiguration des Menues **********************************************************/
 #include "menue.h"
-/* Basic Cofigurations */
-const static int numMenues = 7; // number of Menue lines
-const unsigned int spaceValue = 7; // space for the value on lcd
-const unsigned int decimals = 3;  // Kommastellen für LCD
+
+#define NUMITEMS 7 
+Menue menue(LCDCOL, LCDROW, lcd, encoder, choose, NUMITEMS);
 // Different Menue lines
 // Scale gibt an um wie viel sich der Wert pro tick des encoder ändert
 //("Titel", Wert , Scale)
-Menue_t curr = {"GD IST", 35.040, 0.01};
-Menue_t aim = {"GD SOLL", 35.000, 0.01};
-Menue_t feedZ = {"FEED", 0.020, 0.002};
-Menue_t speedC = {"C RPM", 10.0, 1.0};
-Menue_t rotationsC = {"C RPF", 2.0, 1.0}; // amount of rotations per feed
-Menue_t finishRotC = {"C Nachlauf", 5.0, 1.0}; // amount of rotations when finished feed
-Menue_t feedOutZ = {"Z Rückzug", 5.0, 1.0}; // way the Z axis moves back after finish grinding (mm)
+MenueItem curr(menue, "GD IST", 35.040, 0.01);
+MenueItem aim(menue, "GD SOLL", 35.000, 0.01);
+MenueItem feedZ(menue, "FEED", 0.020, 0.002);
+MenueItem speedC(menue, "C RPM", 10.0, 1.0);
+MenueItem rotationsC(menue, "C RPF", 2.0, 1.0); // amount of rotations per feed
+MenueItem finishRotC(menue, "C Nachlauf", 5.0, 1.0); // amount of rotations when finished feed
+MenueItem feedOutZ(menue, "Z Rückzug", 5.0, 1.0); // way the Z axis moves back after finish grinding (mm)
 
-// Array of Menues Index represents Position in Menue
-Menue_t *menue[numMenues + 1] = {NULL, &curr, &aim , &feedZ,
-                                &speedC, &rotationsC, &finishRotC, &feedOutZ};
 /**************************************************************************************/
 
 /* Konfiguration der Achsen **********************************************************
@@ -98,15 +103,6 @@ const unsigned int driverStepsC = 800;                // driver steps of C_axis
 const unsigned int driverStepsZ = 1600;                // driver steps of Z_axis
 /* Eilgang Antasten */
 const float fastFeedZ = 0.5; // mm per encoder tick
-/**************************************************************************************/
-
-/* Konfiguration der Input PINS *************************************************************/
-/* Taster mit pin und Masse verbinden */
-#include "digitalin.h"
-DigitalIn C_on(2);           // Taster zum einschalten der Drehachse C
-DigitalIn touchOff(3);       // Taster zum "ankratzen" schaltet in den "ankratzmodus" 
-DigitalIn autoStart(4);      // Taster zum starten des automatischen zustellens
-DigitalIn choose(5);         // Taster des encoders (menuesteuerung/ankratzen)
 /**************************************************************************************/
 
 

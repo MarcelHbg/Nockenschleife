@@ -14,10 +14,10 @@
  *************************************************************************************/
 #include "menue.h"
 
-#define CURRITEM=this->_items[this->_curr_menue - 1]
+#define CURRITEM this->_items[this->_curr_menue - 1]
 
 /* ++++++++++++++ menue class */
-menue::menue(int lcdCol, int lcdRow, LiquidCrystal_I2C *display, RotaryEncoder *encoder, DigitalIn *button; int numItems)
+Menue::Menue(int lcd_col, int lcd_row, LiquidCrystal_I2C *display, RotaryEncoder *encoder, DigitalIn *button; int numItems)
 {
 	_lcd = display;
 	_encoder = encoder;
@@ -33,13 +33,13 @@ menue::menue(int lcdCol, int lcdRow, LiquidCrystal_I2C *display, RotaryEncoder *
 	_lcd_pos_value = lcd_col - SPACEVALUE;
 }
 
-void menue::initItem(int index, menueItem new_item)
+void Menue::initItem(int index, menueItem new_item)
 {
 	if (index >= this->_num_items) throw "overflow";
 	this->_items[index] = new_item;
 }
 
-void menue::run()
+void Menue::run()
 {
   /* read encoder during runtime */
 	this->_encoder->tick();
@@ -69,7 +69,7 @@ void menue::run()
 }
 
 /* reset menue to start position*/
-void menue::reset()
+void Menue::reset()
 {
   this->_encoder->setPosition(0);
   this->_curr_menue = 0;
@@ -79,12 +79,12 @@ void menue::reset()
 
 /* private: */
 
-void menue::setSpace(int new_space)
+void Menue::setSpace(int new_space)
 {
 	this->_lcd_pos_value = this->_lcd_width - new_space;
 }
 
-void menue::setLevel();
+void Menue::setLevel();
 {
 	if (this->_curr_menue) { // just set if menue not at home (!= 0)
 		this->_lcd->setCursor(this->_lcd_pos_value, this->_curr_cursor);
@@ -93,7 +93,7 @@ void menue::setLevel();
 	}
 }
 
-void menue::changeItem(int new_pos)
+void Menue::changeItem(int new_pos)
 {
 	if ((new_pos > this->_num_items) || (new_pos < 0)) { // no change
 		encoder.setPosition(this->_curr_menue);
@@ -106,7 +106,7 @@ void menue::changeItem(int new_pos)
 	}
 }
 
-void menue::changeValue(int new_pos)
+void Menue::changeValue(int new_pos)
 {
 	if (new_pos != CURRITEM->getScaledValue()) { // continue after change
       CURRITEM->setScaledValue(newPos);
@@ -114,14 +114,14 @@ void menue::changeValue(int new_pos)
     }
 }
 
-void menue::refreshValue()
+void Menue::refreshValue()
 {
 	this->_lcd->setCursor(this->_lcd_pos_value, this->_curr_cursor);
 	printValue();
 	this->_lcd->setCursor(this->_lcd_pos_value, this->_curr_cursor);
 }
 
-void menue::refreshLcd()
+void Menue::refreshLcd()
 {
 	char title[20];
 	int numMenue, i;
@@ -141,7 +141,7 @@ void menue::refreshLcd()
 	this->_lcd->home();
 }
 
-void menue::printValue()
+void Menue::printValue()
 {
 	int space_val = this->_lcd_col - this->_lcd_pos_value;
 	char value[space_val + 1];
@@ -150,7 +150,7 @@ void menue::printValue()
 }
 
 /* refresh cursor position to current menue */
-void menue::refreshCursor() 
+void Menue::refreshCursor() 
 {
   int i;
   static int lastPage;
@@ -179,13 +179,13 @@ void menue::refreshCursor()
 
 /* calculate the cursor position by using the current Menue as reference */
 /* returns the current Cursor row */
-int menue::calcCursor()
+int Menue::calcCursor()
 {
   return ((this->_curr_menue - (this->_curr_page * this->_lcd_row)) - 1);
 }
 
 /* calc Page of Lcd */
-int menue::calcPage()
+int Menue::calcPage()
 {
   return (int)((this->_curr_menue - 1) / this->_lcd_row);
 }
@@ -193,7 +193,7 @@ int menue::calcPage()
 /* ----------- menue class */
 
 /* +++++++++++ menue item class */
-menueItem::menueItem(menue *menue, char *title, float value, float scale, int index)
+MenueItem::menueItem(Menue *menue, char *title, float value, float scale, int index)
 {
 	menue->initItem(index, this);
 	_menue = menue;
@@ -202,28 +202,28 @@ menueItem::menueItem(menue *menue, char *title, float value, float scale, int in
 	_scale = scale;
 }
 
-char *menueItem::getTitle()
+char *MenueItem::getTitle()
 {
 	return this->_title;
 }
 
-void menueItem::setValue(float newValue)
+void MenueItem::setValue(float newValue)
 {
 	if (newValue >= 100) this->_menue->setSpace(6);
 	this->_value = newValue;
 }
 
-float menueItem::getValue()
+float MenueItem::getValue()
 {
 	return this->_value;
 }
 
-int menueItem::getScaledValue();
+int MenueItem::getScaledValue();
 {
 	return (int)(this->_value / this->_scale);
 }
 
-void menueItem::setScaledValue(int value);
+void MenueItem::setScaledValue(int value);
 {
 	this->_value = (float)(value * this->_scale);
 }
