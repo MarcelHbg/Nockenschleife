@@ -42,7 +42,7 @@ bool mess_on = false;
 /* reset menue after amount of time to start position
   does not block the main loop
   returns true if time has reached */
-void delayResetMenue(int delay_time) {
+void delayResetMenue(unsigned int delay_time) {
   if (millis() - mess_start_time >= delay_time) {
     // reset menue
     menue.reset();
@@ -93,6 +93,7 @@ void setup()
   lcd.setCursor(0, 1);
   lcd.print("Version 1.6");
   delay(1000);
+  
   menue.reset();
 
   /* C axis initialize */
@@ -110,9 +111,6 @@ void setup()
   axisZ.setMinPulseWidth(30);
   axisZ.setSpeed(500); // Steps per second
   fastFeedStepsZ = calcStepsZ(fastFeedZ);
-
-  /* encoder initialize */
-  encoder.setPosition(currentMenue);
 
   /* PINS initialize */
   pinMode(LED_BUILTIN, OUTPUT);
@@ -147,13 +145,14 @@ void loop() {
         }
       }
       /* switch to AutoFeed mode => blocked Err message */
-      if (autoStart.buttonIn())
+      if (autoStart.buttonIn()){
         if (!cOn) showMess("Error!!", "C einschalten!");
         else if (!zTouched) showMess("Error!!", "Z nicht angetastet");
         else {
           mode = 3;
           initAutoFeed();
         }
+      }
       break;
 
     case 1: /* fast TouchOff mode */
@@ -220,7 +219,7 @@ void loop() {
 void initAutoFeed() {
   stepsC = 0; // reset steps of C
   curr.setValue(init_value); //reset current dia to orig
-  simpleRefreshValue(1);
+  menue.refreshValue(RUNNINGVALUE);
   /*calc all used Parameters */
   currStepsZ = calcStepsZ(curr.getValue()); // curr Diameter in steps
   aimStepsZ = calcStepsZ(aim.getValue()); // aim Diameter in steps
@@ -279,8 +278,8 @@ void backFeed(const char* message) {
 
 void endAutoFeed(const char* message) {
   zTouched = 0;
-  curr.getValue(init_value); // reset current dia
-  simpleRefreshValue(1);
+  curr.setValue(init_value); // reset current dia
+  menue.refreshValue(RUNNINGVALUE);
   digitalWrite(LED_BUILTIN, LOW);
   stopC();
   messReset("Autofeed", message);
@@ -304,7 +303,7 @@ void feeding(int steps) {
     if (stepPos != currStepsZ - feedStepsZ) ledBlink(100); // error
     currStepsZ = stepPos;
     curr.setValue(currStepsZ * feedPerStepZ);
-    menue.refreshValue(1);
+    menue.refreshValue(RUNNINGVALUE);
     freshValue = true;
   }
 }
@@ -400,7 +399,7 @@ long calcStepsZ(float value) {
   return (unsigned long)(value / feedPerStepZ); // calculate steps of Z
 }
 
-void ledBlink(int delayTime) {
+void ledBlink(unsigned int delayTime) {
   static unsigned long runTime;
   static bool ledState = false;  // for builtinLED
   unsigned long currentTime = millis();

@@ -62,18 +62,21 @@ DigitalIn choose(5);         // Taster des encoders (menuesteuerung/ankratzen)
 /* Konfiguration des Menues **********************************************************/
 #include "menue.h"
 
-#define NUMITEMS 7 
-Menue menue(LCDCOL, LCDROW, lcd, encoder, choose, NUMITEMS);
+#define RUNNINGVALUE 0
+#define SPACEVALUE 5
+#define DECIMALS 2
+
+Menue menue(LCDCOL, LCDROW, &lcd, &encoder, &choose);
 // Different Menue lines
 // Scale gibt an um wie viel sich der Wert pro tick des encoder ändert
 //("Titel", Wert , Scale)
-MenueItem curr(menue, "GD IST", 35.040, 0.01);
-MenueItem aim(menue, "GD SOLL", 35.000, 0.01);
-MenueItem feedZ(menue, "FEED", 0.020, 0.002);
-MenueItem speedC(menue, "C RPM", 10.0, 1.0);
-MenueItem rotationsC(menue, "C RPF", 2.0, 1.0); // amount of rotations per feed
-MenueItem finishRotC(menue, "C Nachlauf", 5.0, 1.0); // amount of rotations when finished feed
-MenueItem feedOutZ(menue, "Z Rückzug", 5.0, 1.0); // way the Z axis moves back after finish grinding (mm)
+MenueItem curr(&menue, "GD IST", 35.040, 0.01, RUNNINGVALUE);
+MenueItem aim(&menue, "GD SOLL", 35.000, 0.01, 1);
+MenueItem feedZ(&menue, "FEED", 0.020, 0.002, 2);
+MenueItem speedC(&menue, "C RPM", 10.0, 1.0, 3);
+MenueItem rotationsC(&menue, "C RPF", 2.0, 1.0, 4); // amount of rotations per feed
+MenueItem finishRotC(&menue, "C Nachlauf", 5.0, 1.0, 5); // amount of rotations when finished feed
+MenueItem feedOutZ(&menue, "Z Rückzug", 5.0, 1.0, 6); // way the Z axis moves back after finish grinding (mm)
 
 /**************************************************************************************/
 
