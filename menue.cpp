@@ -14,7 +14,7 @@
  *************************************************************************************/
 #include "menue.h"
 
-#define CURRITEM this->_items[this->_curr_menue - 1]
+#define ITEM(a) this->_items[(a) - 1]
 
 /* ++++++++++++++ menue class */
 Menue::Menue(int lcd_col, int lcd_row, LiquidCrystal_I2C *display, RotaryEncoder *encoder, DigitalIn *button; int numItems)
@@ -77,6 +77,14 @@ void Menue::reset()
   refreshLcd();
 }
 
+void Menue::refreshValue(int index)
+{
+	int cursor = calcCursor(index);
+	this->_lcd->setCursor(this->_lcd_pos_value, cursor);
+	printValue(index);
+	this->_lcd->setCursor(this->_lcd_pos_value, cursor);
+}
+
 /* private: */
 
 void Menue::setSpace(int new_space)
@@ -88,7 +96,7 @@ void Menue::setLevel();
 {
 	if (this->_curr_menue) { // just set if menue not at home (!= 0)
 		this->_lcd->setCursor(this->_lcd_pos_value, this->_curr_cursor);
-		encoder.setPosition(CURRITEM->getScaledValue());
+		encoder.setPosition(ITEM(this->_curr_menue)->getScaledValue());
 		this->_level = 1;
 	}
 }
@@ -108,44 +116,37 @@ void Menue::changeItem(int new_pos)
 
 void Menue::changeValue(int new_pos)
 {
-	if (new_pos != CURRITEM->getScaledValue()) { // continue after change
-      CURRITEM->setScaledValue(newPos);
-      refreshValue();
+	if (new_pos != ITEM(this->_curr_menue)->getScaledValue()) { // continue after change
+      ITEM(this->_curr_menue)->setScaledValue(newPos);
+      refreshValue(this->_curr_menue);
     }
-}
-
-void Menue::refreshValue()
-{
-	this->_lcd->setCursor(this->_lcd_pos_value, this->_curr_cursor);
-	printValue();
-	this->_lcd->setCursor(this->_lcd_pos_value, this->_curr_cursor);
 }
 
 void Menue::refreshLcd()
 {
 	char title[20];
-	int numMenue, i;
+	int num_menue, i;
 	// calc first line menue
-	numMenue = (getPage() * this->_lcd_row) + 1;
+	num_menue = (getPage() * this->_lcd_row) + 1;
 	// refresh the output
 	this->_lcd->clear();
 	for (i = 0; i < this->_lcd_row; i++) { // for each lcdRow
-		if (numMenue > this->_num_items) break;
-		sprintf(title, "%d %s", numMenue, this->_items[numMenue - 1]->getTitle());
+		if (num_menue > this->_num_items) break;
+		sprintf(title, "%d %s", num_menue,ITEM(num_menue)->getTitle());
 		this->_lcd->setCursor(0, i);
 		this->_lcd->print(title);
 		this->_lcd->setCursor(this->_lcd_pos_value, i);
-		printValue();
-		numMenue++;
+		printValue(num_menue);
+		num_menue++;
 	}
 	this->_lcd->home();
 }
 
-void Menue::printValue()
+void Menue::printValue(int index)
 {
 	int space_val = this->_lcd_col - this->_lcd_pos_value;
 	char value[space_val + 1];
-	sprintf(value, "%space_val.DECIMALSf", CURRITEM->getValue());
+	sprintf(value, "%space_val.DECIMALSf", ITEM(index)->getValue());
 	this->_lcd->print(value);
 }
 
@@ -179,9 +180,9 @@ void Menue::refreshCursor()
 
 /* calculate the cursor position by using the current Menue as reference */
 /* returns the current Cursor row */
-int Menue::calcCursor()
+int Menue::calcCursor(int index)
 {
-  return ((this->_curr_menue - (this->_curr_page * this->_lcd_row)) - 1);
+  return ((index - (this->_curr_page * this->_lcd_row)) - 1);
 }
 
 /* calc Page of Lcd */

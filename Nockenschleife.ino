@@ -25,7 +25,7 @@ unsigned long fastFeedStepsZ;
 // check parameters
 volatile unsigned long stepsC = 0; // counter of steps for C
 //unsigned long stepsCCopy = 0;
-float currValue = curr.value; // to save current dia before start feeding
+float init_value = curr.getValue(); // to save current dia before start feeding
 bool cOn = false;
 bool zTouched = false;   // check if z is initialized
 bool abortAF = false;    // check abort of Autofeed
@@ -36,14 +36,17 @@ unsigned int mode = 0;
 const unsigned int regMap[] = {0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5};
 unsigned int regStepC; // register bit StepC PIN
 
+unsigned long mess_start_time = 0;
+bool mess_on = false;
 /**************************************************************************************/
 /* reset menue after amount of time to start position
   does not block the main loop
   returns true if time has reached */
-void delayResetMenue(int delayTime) {
-  if (millis() - messStartTime >= delayTime) {
+void delayResetMenue(int delay_time) {
+  if (millis() - mess_start_time >= delay_time) {
     // reset menue
-    resetMenue();
+    menue.reset();
+	mess_on = false;
   }
 }
 
@@ -62,8 +65,8 @@ void showMess(const char *message1, const char *message2) {
   lcd.setCursor(0, 1);
   lcd.print(message2);
 
-  messOn = 1;
-  messStartTime = millis();
+  mess_on = true;
+  mess_start_time = millis();
 }
 /* show message an reset programm*/
 void messReset(const char *message1, const char *message2) {
@@ -90,7 +93,7 @@ void setup()
   lcd.setCursor(0, 1);
   lcd.print("Version 1.6");
   delay(1000);
-  resetMenue();
+  menue.reset();
 
   /* C axis initialize */
   pinMode(pinStepAxisC, OUTPUT);
@@ -124,12 +127,12 @@ void loop() {
   //SerialChangeMode(); // just for testing
   if (zTouched && mode != 3) ledBlink(1000);
   /* reset when message is shown after amount of millis */
-  if (messOn) delayResetMenue(3000);
+  if (mess_on) delayResetMenue(3000);
   /* run diffrent modes */
   switch (mode) {
     default:  /* Menue mode (standard) */
       /* main funktion */
-      runMenue();
+      menue.run();
       /* switch C axis */
       if (C_on.buttonIn()) {
         if (cOn) stopCmess();
@@ -216,14 +219,14 @@ void loop() {
 /*-----------------------------------------------------------------------------------*/
 void initAutoFeed() {
   stepsC = 0; // reset steps of C
-  curr.value = currValue; //reset current dia to orig
+  curr.setValue(init_value); //reset current dia to orig
   simpleRefreshValue(1);
   /*calc all used Parameters */
-  currStepsZ = calcStepsZ(curr.value); // curr Diameter in steps
-  aimStepsZ = calcStepsZ(aim.value); // aim Diameter in steps
-  feedStepsZ = calcStepsZ(feedZ.value); // feed in steps
-  feedOutStepsZ = calcStepsZ(feedOutZ.value); // feedOut in steps
-  stepsPerFeedC = stepsPerRevC * (int)(rotationsC.value); // amount of steps between feeds
+  currStepsZ = calcStepsZ(curr.getValue()); // curr Diameter in steps
+  aimStepsZ = calcStepsZ(aim.getValue()); // aim Diameter in steps
+  feedStepsZ = calcStepsZ(feedZ.getValue()); // feed in steps
+  feedOutStepsZ = calcStepsZ(feedOutZ.getValue()); // feedOut in steps
+  stepsPerFeedC = stepsPerRevC * (int)(rotationsC.getValue()); // amount of steps between feeds
   /* setup */
   axisZ.setCurrentPosition(currStepsZ); //set motor position
   digitalWrite(LED_BUILTIN, HIGH); // signal for auto mode on
@@ -245,7 +248,7 @@ void initAutoFeed() {
 void runAutoFeed() {
   // check finish values
   if (currStepsZ == aimStepsZ) { // reach aim diameter
-    if (stepsC >= (stepsPerRevC * finishRotC.value)) { // free grinding
+    if (stepsC >= (stepsPerRevC * finishRotC.getValue())) { // free grinding
       backFeed("abgeschlossen");
     }
   }
@@ -276,7 +279,7 @@ void backFeed(const char* message) {
 
 void endAutoFeed(const char* message) {
   zTouched = 0;
-  curr.value = currValue; // reset current dia
+  curr.getValue(init_value); // reset current dia
   simpleRefreshValue(1);
   digitalWrite(LED_BUILTIN, LOW);
   stopC();
@@ -300,8 +303,8 @@ void feeding(int steps) {
     //Serial.print('\n');
     if (stepPos != currStepsZ - feedStepsZ) ledBlink(100); // error
     currStepsZ = stepPos;
-    curr.value = currStepsZ * feedPerStepZ;
-    simpleRefreshValue(1);
+    curr.setValue(currStepsZ * feedPerStepZ);
+    menue.refreshValue(1);
     freshValue = true;
   }
 }
@@ -309,7 +312,7 @@ void feeding(int steps) {
 /* Run C funcs loop independent just 1 call*/
 /*-----------------------------------------------------------------------------------*/
 unsigned long speedCtime() {
-  float revPerSec = (speedC.value / 60.0); // revolution per second
+  float revPerSec = (speedC.getValue() / 60.0); // revolution per second
   stepSpeedC = (unsigned int)(revPerSec * stepsPerRevC); // in Hz (steps per second)
   float yHz = ((float)(stepSpeedC) / 1000000);
   return ((1 / yHz) / 2);
@@ -360,7 +363,7 @@ void runC() {
 void initTouchOff() {
   zTouched = false; // reset z status
   digitalWrite(LED_BUILTIN, LOW);
-  feedStepsZ = calcStepsZ(feedZ.value);
+  feedStepsZ = calcStepsZ(feedZ.getValue());
   resetTouchOff();
   /* message */
   showMess("Antasten", "eingeschaltet");
@@ -390,48 +393,8 @@ void runTouchOff(unsigned long feedSteps) {
   }
 }
 /*-----------------------------------------------------------------------------------*/
-/* Menue mode funcs */
+/* help funcs */
 /*-----------------------------------------------------------------------------------*/
-void runMenue() {
-  /* read encoder during runtime */
-  encoder.tick();
-  int newPos = encoder.getPosition();
-
-  /* level 0 menue */
-  if (!level) {
-    /* toggle menue level */
-    if (choose.buttonIn()) {
-      if (currentMenue) { // just toggle if menue not at home (!= 0)
-        changeEncoderPos();
-        level = 1;
-      }
-    }
-    /* change menue */
-    int newMenue = chooseMenue(newPos); // filter encoder reading
-    if (newMenue != currentMenue) { // continue after change
-      currentMenue = newMenue;
-      refreshCursor();
-    }
-  } // if level 0
-  /* level 1 change values */
-  else {
-    /* check finish */
-    if (choose.buttonIn()) {
-      resetMenue(); // go to home
-    }
-    /* block negative range */
-    if (newPos < 1) {
-      encoder.setPosition(1);
-      newPos = 1;
-    }
-    /* change value */
-    if (newPos != currentValue) { // continue after change
-      currentValue = newPos;
-      refreshValue(newPos); // refresh changed value
-      currValue = curr.value; // save curr dia it may has changed
-    }
-  }// else level 1
-}
 
 long calcStepsZ(float value) {
   return (unsigned long)(value / feedPerStepZ); // calculate steps of Z

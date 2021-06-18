@@ -41,14 +41,14 @@ private:
 	void setLevel();
 	void changeItem(int new_pos);
 	void changeValue(int new_pos);
-	void refreshValue();
+	void refreshValue(int index);
 	void refreshLcd();
-	void printValue();
+	void printValue(int index);
 	/* refresh cursor position to current menue */
 	void refreshCursor();
 	/* calculate the cursor position by using the current Menue as reference */
 	/* returns the current Cursor row */
-	int calcCursor();
+	int calcCursor(int index);
 	/* calc Page of Lcd */
 	int calcPage();
 
