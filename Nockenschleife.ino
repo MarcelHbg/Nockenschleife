@@ -37,6 +37,34 @@ const unsigned int regMap[] = {0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5};
 unsigned int regStepC; // register bit StepC PIN
 
 /**************************************************************************************/
+/* reset menue after amount of time to start position
+  does not block the main loop
+  returns true if time has reached */
+void delayResetMenue(int delayTime) {
+  if (millis() - messStartTime >= delayTime) {
+    // reset menue
+    resetMenue();
+  }
+}
+
+/* show message  Attention! needs alot of time
+    needs a reset of Menue after it*/
+void showMess(const char *message1, const char *message2) {
+
+  Serial.print(message1);
+  Serial.print(' ');
+  Serial.print(message2);
+  Serial.print('\n');
+  lcd.clear();
+  lcd.noBlink();
+  lcd.setCursor(0, 0);
+  lcd.print(message1);
+  lcd.setCursor(0, 1);
+  lcd.print(message2);
+
+  messOn = 1;
+  messStartTime = millis();
+}
 /* show message an reset programm*/
 void messReset(const char *message1, const char *message2) {
   /* show Message */
